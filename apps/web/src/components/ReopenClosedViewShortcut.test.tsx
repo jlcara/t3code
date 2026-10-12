@@ -1,5 +1,9 @@
 import type { ResolvedKeybindingsConfig, ScopedThreadRef } from "@t3tools/contracts";
-import { DEFAULT_RESOLVED_KEYBINDINGS } from "@t3tools/shared/keybindings";
+import {
+  compileResolvedKeybindingsConfig,
+  DEFAULT_RESOLVED_KEYBINDINGS,
+  mergeWithDefaultKeybindings,
+} from "@t3tools/shared/keybindings";
 import * as Cause from "effect/Cause";
 import { AsyncResult } from "effect/reactivity";
 import { act } from "react";
@@ -331,5 +335,15 @@ describe("root reopen shortcut", () => {
       expect.objectContaining({ command: "sidebar.toggle" }),
       expect.objectContaining({ command: "rightPanel.toggle" }),
     ]);
+  });
+
+  it("forwards annotate out of a focused desktop browser once the user binds it", async () => {
+    state.keybindings = mergeWithDefaultKeybindings(
+      compileResolvedKeybindingsConfig([{ key: "mod+alt+c", command: "preview.annotate" }]),
+    );
+    await render();
+    expect(state.setShortcuts).toHaveBeenLastCalledWith(
+      expect.arrayContaining([expect.objectContaining({ command: "preview.annotate" })]),
+    );
   });
 });

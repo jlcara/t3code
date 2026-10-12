@@ -297,6 +297,64 @@ describe("thread undo shortcut", () => {
   });
 });
 
+describe("preview annotate shortcut", () => {
+  const userBindings = mergeWithDefaultKeybindings(
+    compileResolvedKeybindingsConfig([
+      { key: "mod+alt+c", command: "preview.annotate", when: "previewOpen && !terminalFocus" },
+    ]),
+  );
+
+  it("has no default shortcut", () => {
+    assert.deepEqual(
+      effectiveShortcutsForCommand(DEFAULT_RESOLVED_KEYBINDINGS, "preview.annotate"),
+      [],
+    );
+    assert.isNull(
+      resolveShortcutCommand(
+        event({ key: "ç", code: "KeyC", metaKey: true, altKey: true }),
+        DEFAULT_RESOLVED_KEYBINDINGS,
+        { platform: "MacIntel", context: { previewOpen: true } },
+      ),
+    );
+  });
+
+  it("resolves a user binding on macOS and elsewhere while the preview is open", () => {
+    assert.equal(
+      resolveShortcutCommand(
+        event({ key: "ç", code: "KeyC", metaKey: true, altKey: true }),
+        userBindings,
+        { platform: "MacIntel", context: { previewOpen: true } },
+      ),
+      "preview.annotate",
+    );
+    assert.equal(
+      resolveShortcutCommand(
+        event({ key: "c", code: "KeyC", ctrlKey: true, altKey: true }),
+        userBindings,
+        { platform: "Linux", context: { previewOpen: true } },
+      ),
+      "preview.annotate",
+    );
+  });
+
+  it("keeps a user binding inactive without an open preview or inside the terminal", () => {
+    assert.isNull(
+      resolveShortcutCommand(
+        event({ key: "c", code: "KeyC", ctrlKey: true, altKey: true }),
+        userBindings,
+        { platform: "Linux", context: { previewOpen: false } },
+      ),
+    );
+    assert.isNull(
+      resolveShortcutCommand(
+        event({ key: "c", code: "KeyC", ctrlKey: true, altKey: true }),
+        userBindings,
+        { platform: "Linux", context: { previewOpen: true, terminalFocus: true } },
+      ),
+    );
+  });
+});
+
 describe("copy thread reference shortcut", () => {
   it("resolves Cmd+Shift+C on macOS and Ctrl+Shift+C elsewhere", () => {
     assert.equal(
